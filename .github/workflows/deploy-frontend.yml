@@ -34,7 +34,7 @@ jobs:
       - name: Install
         run: |
           npm ci
-          NODE_ENV="production" npm run frontend:build
+          NODE_ENV="production" npm run build
       - name: Upload app artifact
         uses: actions/upload-artifact@v4
         with:
