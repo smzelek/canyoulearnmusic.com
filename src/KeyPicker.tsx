@@ -1,39 +1,33 @@
 import { formatNote, type Accidental } from './notes'
 import {
-  NOTE_NAMES,
   relativeMinorRoot,
   type Mode,
   type NoteName,
-  type ScaleChord,
 } from './chords'
-import './ChordChart.css'
 
-type ChordChartProps = {
-  onChordPlay: (notes: string[]) => void
-  accidental: Accidental
+const SHARP_KEY_OPTIONS: NoteName[] = ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#']
+const FLAT_KEY_OPTIONS: NoteName[] = ['C', 'F', 'A#', 'D#', 'G#', 'C#', 'F#', 'B']
+
+type KeyPickerProps = {
   keyName: NoteName
   mode: Mode
-  chords: ScaleChord[]
+  accidental: Accidental
   onKeyChange: (k: NoteName) => void
   onModeChange: (m: Mode) => void
 }
 
-export function ChordChart({
-  onChordPlay,
-  accidental,
+export function KeyPicker({
   keyName,
   mode,
-  chords,
+  accidental,
   onKeyChange,
   onModeChange,
-}: ChordChartProps) {
-  const relMinor = relativeMinorRoot(keyName)
-
+}: KeyPickerProps) {
   return (
-    <div className="chord-chart">
+    <div className="key-picker">
       <div className="key-selector">
         <span className="key-label">Key</span>
-        {NOTE_NAMES.map((k) => (
+        {(accidental === 'sharp' ? SHARP_KEY_OPTIONS : FLAT_KEY_OPTIONS).map((k) => (
           <button
             key={k}
             type="button"
@@ -61,30 +55,8 @@ export function ChordChart({
           className={`mode-btn${mode === 'minor' ? ' active' : ''}`}
           onClick={() => onModeChange('minor')}
         >
-          {formatNote(relMinor, accidental)} minor
+          {formatNote(relativeMinorRoot(keyName), accidental)} minor
         </button>
-      </div>
-      <div className="chord-grid">
-        {chords.map((c) => {
-          const rootDisplay = formatNote(c.name.replace(/[m°]$/, ''), accidental)
-          const suffix = c.name.match(/[m°]$/)?.[0] ?? ''
-          return (
-            <div className="chord-cell" key={c.roman}>
-              <div className="chord-header">
-                <div className="quality">{c.label}</div>
-                <div className="roman">({c.roman})</div>
-              </div>
-              <button
-                type="button"
-                className="chord-btn"
-                onClick={() => onChordPlay(c.notes)}
-              >
-                {rootDisplay}
-                {suffix}
-              </button>
-            </div>
-          )
-        })}
       </div>
     </div>
   )

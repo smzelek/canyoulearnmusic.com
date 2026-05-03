@@ -200,14 +200,15 @@
   text-align: left;
 }
 
-.ap-lyrics p {
+.audio-player .ap-lyrics p {
   margin: 0;
   line-height: 1.45;
   font-size: 13px;
   transition: opacity 0.15s;
+  text-align: left;
 }
 
-.ap-lyrics-instrumental {
+.audio-player .ap-lyrics .ap-lyrics-instrumental {
   font-style: italic;
   color: var(--text);
   transition: opacity 0.15s;

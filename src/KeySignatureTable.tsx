@@ -82,18 +82,21 @@ type KeySignatureTableProps = {
 export function KeySignatureTable({ selected }: KeySignatureTableProps) {
   return (
     <div className="signature-tables">
-      <HalfTable
-        side="flat"
-        accidentals={FLAT_ACCIDENTALS}
-        keys={FLAT_KEYS}
-        selected={selected === 'flat'}
-      />
-      <HalfTable
-        side="sharp"
-        accidentals={SHARP_ACCIDENTALS}
-        keys={SHARP_KEYS}
-        selected={selected === 'sharp'}
-      />
+      {selected === 'flat' ? (
+        <HalfTable
+          side="flat"
+          accidentals={FLAT_ACCIDENTALS}
+          keys={FLAT_KEYS}
+          selected
+        />
+      ) : (
+        <HalfTable
+          side="sharp"
+          accidentals={SHARP_ACCIDENTALS}
+          keys={SHARP_KEYS}
+          selected
+        />
+      )}
     </div>
   )
 }

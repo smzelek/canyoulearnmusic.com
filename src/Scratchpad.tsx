@@ -30,9 +30,6 @@ export function Scratchpad({
 
   return (
     <div className={`scratchpad scratchpad-${accidental}`}>
-      <div className="scratchpad-label">
-        Scratchpad — guess the notes in your key
-      </div>
       <div className="scratchpad-row">
         {letters.map((letter) => {
           const state = letterStates.get(letter) ?? null

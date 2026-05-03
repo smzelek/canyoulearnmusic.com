@@ -89,7 +89,7 @@ function getVocalsLoopInfo(globalPos: number, totalDuration: number) {
 }
 
 type AudioPlayerProps = {
-  variant?: 'instrumental' | 'with-vocals' | 'chord-scratchpad'
+  variant?: 'instrumental' | 'with-vocals' | 'chord-scratchpad' | 'vocals-no-lyrics'
   accidental?: Accidental
   chordOptions?: ScaleChord[]
   chosenChords?: (number | null)[]
@@ -103,7 +103,8 @@ export function AudioPlayer({
   chosenChords = [null, null, null, null],
   onChosenChordsChange,
 }: AudioPlayerProps) {
-  const isVocals = variant === 'with-vocals'
+  const isVocals = variant === 'with-vocals' || variant === 'vocals-no-lyrics'
+  const showLyrics = variant === 'with-vocals'
   const isScratchpad = variant === 'chord-scratchpad'
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -520,7 +521,7 @@ export function AudioPlayer({
         </div>
       )}
 
-      {isVocals && (
+      {showLyrics && (
         <div className="ap-lyrics">
           <p
             className="ap-lyrics-instrumental"
