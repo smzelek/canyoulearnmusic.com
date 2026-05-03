@@ -2,6 +2,61 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.presentation::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 0 rgba(220, 50, 50, 0);
+  z-index: 1000;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  15% { transform: translateX(-10px); }
+  30% { transform: translateX(10px); }
+  45% { transform: translateX(-7px); }
+  60% { transform: translateX(7px); }
+  75% { transform: translateX(-3px); }
+  90% { transform: translateX(3px); }
+}
+
+@keyframes wrong-pulse {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(220, 50, 50, 0.7); }
+  50% { box-shadow: 0 0 0 6px rgba(220, 50, 50, 0); }
+}
+
+.accidental-btn.is-wrong,
+.key-btn.is-wrong,
+.mode-btn.is-wrong,
+.ap-chord-toggle-btn.is-wrong {
+  background: rgba(220, 50, 50, 0.15) !important;
+  border-color: rgba(220, 50, 50, 0.9) !important;
+  color: rgb(200, 40, 40) !important;
+  animation: wrong-pulse 1.2s ease-out infinite;
+}
+
+.scratch-cell.is-wrong {
+  border-radius: 6px;
+  animation: wrong-pulse 1.2s ease-out infinite;
+}
+
+@keyframes deny-pulse {
+  0% { box-shadow: inset 0 0 0 0 rgba(220, 50, 50, 0); }
+  25% { box-shadow: inset 0 0 80px 8px rgba(220, 50, 50, 0.6); }
+  100% { box-shadow: inset 0 0 0 0 rgba(220, 50, 50, 0); }
+}
+
+.presentation.deny {
+  animation: shake 0.4s ease-in-out;
+}
+
+.presentation.deny::before {
+  animation: deny-pulse 0.45s ease-out;
 }
 
 .slide {
@@ -39,7 +94,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 10px;
   width: 100%;
 }
 
@@ -102,7 +157,7 @@
   transition: background 0.15s, color 0.15s;
 }
 
-.slide-nav-btn:hover:not(:disabled) {
+.slide-nav-btn:hover:not(:disabled):not([aria-disabled='true']) {
   background: var(--accent-bg);
   color: var(--accent);
 }
@@ -110,6 +165,11 @@
 .slide-nav-btn:disabled {
   opacity: 0.3;
   cursor: default;
+}
+
+.slide-nav-btn[aria-disabled='true'] {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 
 .slide-counter {
@@ -170,7 +230,7 @@
 }
 
 .accidental-btn.sharp:hover:not(.active) {
-  color: #a8323a;
+  color: #2d8c3a;
 }
 
 .accidental-btn.flat.active {
@@ -179,6 +239,6 @@
 }
 
 .accidental-btn.sharp.active {
-  background: #a8323a;
+  background: #2d8c3a;
   color: white;
 }

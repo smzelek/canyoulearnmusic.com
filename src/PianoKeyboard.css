@@ -131,10 +131,10 @@
 }
 
 .piano-mode-sharp {
-  --soft-white: #fbe5e7;
-  --soft-white-hover: #f6cbcf;
-  --soft-black: #3a1418;
-  --soft-black-hover: #4a181d;
+  --soft-white: #e3fbe7;
+  --soft-white-hover: #c8f2cd;
+  --soft-black: #143a18;
+  --soft-black-hover: #18491d;
 }
 
 .piano-mode-flat {

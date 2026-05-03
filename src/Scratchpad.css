@@ -12,7 +12,7 @@
 }
 
 .scratchpad-sharp {
-  --accent-color: #a8323a;
+  --accent-color: #2d8c3a;
 }
 
 .scratchpad-flat {
@@ -73,6 +73,7 @@
 
 .scratch-segments {
   display: inline-flex;
+  flex-direction: column;
   border: 1px solid var(--border);
   border-radius: 6px;
   overflow: hidden;
@@ -80,10 +81,11 @@
 
 .scratch-seg {
   font: inherit;
-  font-size: 18px;
-  width: 28px;
-  height: 32px;
-  padding: 0;
+  font-size: 12px;
+  font-weight: 600;
+  min-width: 64px;
+  height: 26px;
+  padding: 0 8px;
   border: none;
   background: var(--bg);
   color: var(--text);
@@ -94,7 +96,7 @@
 }
 
 .scratch-seg + .scratch-seg {
-  border-left: 1px solid var(--border);
+  border-top: 1px solid var(--border);
 }
 
 .scratch-seg:hover:not(.active) {

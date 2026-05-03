@@ -19,7 +19,7 @@ function trimSilence(ac: AudioContext, buffer: AudioBuffer, threshold = 0.01): A
   return trimmed
 }
 
-const CHORD_COLORS = ['#d65f5f', '#d6a032', '#32a0d6', '#9f32d6'] as const
+const CHORD_COLORS = ['#5fc468', '#d6a032', '#32a0d6', '#9f32d6'] as const
 
 function transposeDownOctave(note: string): string {
   const m = note.match(/^([A-G][#b]?)(-?\d+)$/)
@@ -39,6 +39,37 @@ const VOCALS_LOOP_STARTS = [0, 11.9, 23.1, 34.2] as const
 const SCRATCHPAD_SLICE_SEC = 0.70
 const SCRATCHPAD_SILENCE_SEC = 0.7
 const SCRATCHPAD_CYCLE_SEC = SCRATCHPAD_SLICE_SEC + SCRATCHPAD_SILENCE_SEC
+
+function makeConcatBuffer(
+  ac: AudioContext,
+  src: AudioBuffer,
+  sliceSec: number,
+): AudioBuffer {
+  const fullSegDur = src.duration / 4
+  const sliceLen = Math.floor(sliceSec * src.sampleRate)
+  const out = ac.createBuffer(src.numberOfChannels, sliceLen * 4, src.sampleRate)
+  const fadeInLen = Math.min(Math.floor(0.02 * src.sampleRate), Math.floor(sliceLen / 4))
+  const fadeOutLen = Math.min(Math.floor(0.12 * src.sampleRate), Math.floor(sliceLen / 2))
+  for (let ch = 0; ch < src.numberOfChannels; ch++) {
+    const data = src.getChannelData(ch)
+    const dst = out.getChannelData(ch)
+    for (let s = 0; s < 4; s++) {
+      const startSample = Math.floor(s * fullSegDur * src.sampleRate)
+      const copyLen = Math.min(sliceLen, data.length - startSample)
+      if (copyLen <= 0) continue
+      const offset = s * sliceLen
+      for (let i = 0; i < copyLen; i++) dst[offset + i] = data[startSample + i]
+      for (let i = 0; i < fadeInLen && i < copyLen; i++) {
+        dst[offset + i] *= i / fadeInLen
+      }
+      for (let i = 0; i < fadeOutLen && i < copyLen; i++) {
+        const idx2 = copyLen - fadeOutLen + i
+        if (idx2 >= 0) dst[offset + idx2] *= 1 - i / fadeOutLen
+      }
+    }
+  }
+  return out
+}
 
 function makeSliceWithSilence(
   ac: AudioContext,
@@ -89,11 +120,13 @@ function getVocalsLoopInfo(globalPos: number, totalDuration: number) {
 }
 
 type AudioPlayerProps = {
-  variant?: 'instrumental' | 'with-vocals' | 'chord-scratchpad' | 'vocals-no-lyrics'
+  variant?: 'instrumental' | 'with-vocals' | 'chord-scratchpad'
   accidental?: Accidental
   chordOptions?: ScaleChord[]
   chosenChords?: (number | null)[]
   onChosenChordsChange?: (next: (number | null)[]) => void
+  wrongChordSlots?: Set<number>
+  onNotesActive?: (notes: string[]) => void
 }
 
 export function AudioPlayer({
@@ -102,8 +135,10 @@ export function AudioPlayer({
   chordOptions = [],
   chosenChords = [null, null, null, null],
   onChosenChordsChange,
+  wrongChordSlots,
+  onNotesActive,
 }: AudioPlayerProps) {
-  const isVocals = variant === 'with-vocals' || variant === 'vocals-no-lyrics'
+  const isVocals = variant === 'with-vocals'
   const showLyrics = variant === 'with-vocals'
   const isScratchpad = variant === 'chord-scratchpad'
 
@@ -115,6 +150,8 @@ export function AudioPlayer({
   const bufferRef = useRef<AudioBuffer | null>(null)
   const sourceRef = useRef<AudioBufferSourceNode | null>(null)
   const gainRef = useRef<GainNode | null>(null)
+  const chosenChordsRef = useRef(chosenChords)
+  const chordOptionsRef = useRef(chordOptions)
 
   const startTimeRef = useRef(0)
   const globalOffsetRef = useRef(0)
@@ -127,13 +164,13 @@ export function AudioPlayer({
   const [loaded, setLoaded] = useState(false)
   const [loopIndex, setLoopIndex] = useState(0)
   const [chordIndex, setChordIndex] = useState(0)
-  const [activeSegment, setActiveSegment] = useState<number | null>(null)
+  const [activeButton, setActiveButton] = useState<{ idx: number; kind: 'original' | 'together' } | null>(null)
 
   useEffect(() => {
     const ac = new AudioContext()
     acRef.current = ac
     const gain = ac.createGain()
-    gain.gain.value = 0.8
+    gain.gain.value = isScratchpad ? 1 : 0.8
     gain.connect(ac.destination)
     gainRef.current = gain
     const src = isVocals ? '/instrumental-to-vocal-chorus.mp3' : '/instrumental-chorus-loop.mp3'
@@ -149,6 +186,7 @@ export function AudioPlayer({
       try { sourceRef.current?.stop() } catch { /**/ }
       ac.close()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const drawWaveform = (canvas: HTMLCanvasElement, buffer: AudioBuffer, loopIdx = 0) => {
@@ -304,7 +342,7 @@ export function AudioPlayer({
     setLoopIndex(0)
     setChordIndex(0)
     setPlaying(false)
-    setActiveSegment(null)
+    setActiveButton(null)
     applyPct(0, isScratchpad ? null : undefined)
   }
 
@@ -329,14 +367,10 @@ export function AudioPlayer({
     rafRef.current = requestAnimationFrame(animate)
   }
 
-  const toggleSegmentLoop = (idx: number) => {
+  const playSegmentGuitar = (idx: number, kind: 'original' | 'together' = 'original') => {
     const ac = acRef.current
     const buffer = bufferRef.current
     if (!ac || !buffer) return
-    if (activeSegmentRef.current === idx) {
-      stop()
-      return
-    }
     try { sourceRef.current?.stop() } catch { /**/ }
     sourceRef.current = null
     cancelAnimationFrame(rafRef.current)
@@ -344,19 +378,52 @@ export function AudioPlayer({
 
     const fullSegDur = buffer.duration / 4
     const segStart = idx * fullSegDur
-    const sliceBuf = makeSliceWithSilence(ac, buffer, segStart, SCRATCHPAD_SLICE_SEC, SCRATCHPAD_SILENCE_SEC)
+    const sliceBuf = makeSliceWithSilence(ac, buffer, segStart, SCRATCHPAD_SLICE_SEC, 0)
 
     const source = ac.createBufferSource()
     source.buffer = sliceBuf
-    source.loop = true
+    source.loop = false
     source.connect(gainRef.current ?? ac.destination)
     source.start(0)
+    source.onended = () => {
+      if (sourceRef.current !== source) return
+      sourceRef.current = null
+      cancelAnimationFrame(rafRef.current)
+      activeSegmentRef.current = null
+      setActiveButton(null)
+      setPlaying(false)
+      applyPct(0, null)
+    }
     sourceRef.current = source
     startTimeRef.current = ac.currentTime
     activeSegmentRef.current = idx
-    setActiveSegment(idx)
+    setActiveButton({ idx, kind })
     setPlaying(true)
     rafRef.current = requestAnimationFrame(animate)
+  }
+
+  const playSegmentPiano = (idx: number) => {
+    const chordIdx = chosenChordsRef.current[idx]
+    if (chordIdx === null || chordIdx === undefined) return
+    const chord = chordOptionsRef.current[chordIdx]
+    if (!chord) return
+    playChord(chord.notes.map(transposeDownOctave), SCRATCHPAD_SLICE_SEC)
+    onNotesActive?.(chord.notes)
+  }
+
+  const playSegmentOriginal = (idx: number) => {
+    playSegmentGuitar(idx, 'original')
+  }
+
+  const playSegmentYours = (idx: number) => {
+    try { sourceRef.current?.stop() } catch { /**/ }
+    sourceRef.current = null
+    playSegmentPiano(idx)
+  }
+
+  const playSegmentTogether = (idx: number) => {
+    playSegmentGuitar(idx, 'together')
+    playSegmentPiano(idx)
   }
 
   const handleChordChoice = (slotIdx: number, chordIdx: number) => {
@@ -364,7 +431,95 @@ export function AudioPlayer({
     next[slotIdx] = chordIdx
     onChosenChordsChange?.(next)
     const chord = chordOptions[chordIdx]
-    if (chord) playChord(chord.notes.map(transposeDownOctave), SCRATCHPAD_SLICE_SEC)
+    if (!chord) return
+    playChord(chord.notes.map(transposeDownOctave), SCRATCHPAD_SLICE_SEC)
+    onNotesActive?.(chord.notes)
+  }
+
+  useEffect(() => {
+    chosenChordsRef.current = chosenChords
+  }, [chosenChords])
+
+  useEffect(() => {
+    chordOptionsRef.current = chordOptions
+  }, [chordOptions])
+
+  const sweepStartTimeRef = useRef(0)
+
+  const sweepAnimate = () => {
+    const ac = acRef.current
+    if (!ac) return
+    const totalDur = SCRATCHPAD_SLICE_SEC * 4
+    const elapsed = ac.currentTime - sweepStartTimeRef.current
+    const pct = Math.max(0, Math.min(elapsed / totalDur, 1))
+    applyPct(pct)
+    if (pct < 1) {
+      rafRef.current = requestAnimationFrame(sweepAnimate)
+    }
+  }
+
+  const startSweep = () => {
+    const ac = acRef.current
+    if (!ac) return
+    sweepStartTimeRef.current = ac.currentTime
+    cancelAnimationFrame(rafRef.current)
+    rafRef.current = requestAnimationFrame(sweepAnimate)
+  }
+
+  const hearOriginal = () => {
+    const ac = acRef.current
+    const buffer = bufferRef.current
+    if (!ac || !buffer) return
+    stop()
+    clearHearYours()
+    if (ac.state === 'suspended') ac.resume()
+    const concat = makeConcatBuffer(ac, buffer, SCRATCHPAD_SLICE_SEC)
+    const source = ac.createBufferSource()
+    source.buffer = concat
+    source.loop = false
+    source.connect(gainRef.current ?? ac.destination)
+    source.start(0)
+    source.onended = () => {
+      if (sourceRef.current === source) sourceRef.current = null
+      cancelAnimationFrame(rafRef.current)
+      applyPct(0, null)
+    }
+    sourceRef.current = source
+    startSweep()
+  }
+
+  const hearYoursTimersRef = useRef<number[]>([])
+
+  const clearHearYours = () => {
+    hearYoursTimersRef.current.forEach((t) => window.clearTimeout(t))
+    hearYoursTimersRef.current = []
+  }
+
+  const hearYours = () => {
+    const ac = acRef.current
+    if (!ac) return
+    stop()
+    clearHearYours()
+    if (ac.state === 'suspended') ac.resume()
+    for (let i = 0; i < 4; i++) {
+      const idx = chosenChords[i]
+      if (idx === null) continue
+      const chord = chordOptions[idx]
+      if (!chord) continue
+      const t = window.setTimeout(() => {
+        playChord(chord.notes.map(transposeDownOctave), SCRATCHPAD_SLICE_SEC)
+        onNotesActive?.(chord.notes)
+      }, i * SCRATCHPAD_SLICE_SEC * 1000)
+      hearYoursTimersRef.current.push(t)
+    }
+    startSweep()
+    const totalMs = SCRATCHPAD_SLICE_SEC * 4 * 1000
+    hearYoursTimersRef.current.push(
+      window.setTimeout(() => {
+        cancelAnimationFrame(rafRef.current)
+        applyPct(0, null)
+      }, totalMs),
+    )
   }
 
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -407,7 +562,7 @@ export function AudioPlayer({
             <div className="ap-slot" key={i}>
               {isScratchpad ? (
                 <div
-                  className="ap-chord-toggle"
+                  className={`ap-chord-toggle${wrongChordSlots?.has(i) ? ' is-wrong' : ''}`}
                   role="radiogroup"
                   aria-label={`Chord slot ${i + 1}`}
                 >
@@ -415,14 +570,15 @@ export function AudioPlayer({
                     const root = formatNote(c.name.replace(/[m°]$/, ''), accidental)
                     const suffix = c.name.match(/[m°]$/)?.[0] ?? ''
                     const selected = chosenChords[i] === j
+                    const wrong = selected && (wrongChordSlots?.has(i) ?? false)
                     return (
                       <button
                         key={j}
                         type="button"
                         role="radio"
                         aria-checked={selected}
-                        className={`ap-chord-toggle-btn${selected ? ' active' : ''}`}
-                        style={selected ? { borderColor: color, color, background: hexToRgba(color, 0.15) } : undefined}
+                        className={`ap-chord-toggle-btn${selected ? ' active' : ''}${wrong ? ' is-wrong' : ''}`}
+                        style={selected && !wrong ? { borderColor: color, color, background: hexToRgba(color, 0.15) } : undefined}
                         onClick={() => handleChordChoice(i, j)}
                       >
                         {root}{suffix}
@@ -433,9 +589,12 @@ export function AudioPlayer({
               ) : slotChord ? (
                 <button
                   type="button"
-                  className="ap-slot-circle ap-slot-circle-btn"
-                  style={{ borderColor: color, color }}
-                  onClick={() => playChord(slotChord.notes.map(transposeDownOctave))}
+                  className={`ap-slot-circle ap-slot-circle-btn${playing && chordIndex === i ? ' is-current' : ''}`}
+                  style={{ borderColor: color, color, ['--slot-color' as string]: color }}
+                  onClick={() => {
+                    playChord(slotChord.notes.map(transposeDownOctave))
+                    onNotesActive?.(slotChord.notes)
+                  }}
                   aria-label={`Play ${slotRoot}${slotSuffix}`}
                 >
                   {slotRoot}{slotSuffix}
@@ -503,21 +662,62 @@ export function AudioPlayer({
       {isScratchpad && (
         <div className="ap-segment-btns">
           {CHORD_COLORS.map((color, i) => {
-            const active = activeSegment === i
+            const slotChordIdx = chosenChords[i]
+            const hasChord = slotChordIdx !== null && slotChordIdx !== undefined
+            const originalActive = activeButton?.idx === i && activeButton.kind === 'original'
+            const togetherActive = activeButton?.idx === i && activeButton.kind === 'together'
             return (
-              <button
-                key={i}
-                type="button"
-                className={`ap-segment-btn${active ? ' active' : ''}`}
-                style={active ? { borderColor: color, color } : undefined}
-                onClick={() => toggleSegmentLoop(i)}
-                disabled={!loaded}
-                aria-label={active ? `Stop loop ${i + 1}` : `Loop segment ${i + 1}`}
-              >
-                {active ? '⏹' : '▶'}
-              </button>
+              <div className="ap-segment-col" key={i}>
+                <button
+                  type="button"
+                  className={`ap-segment-btn${originalActive ? ' active' : ''}`}
+                  style={originalActive ? { borderColor: color, color } : undefined}
+                  onClick={() => playSegmentOriginal(i)}
+                  disabled={!loaded}
+                >
+                  Original
+                </button>
+                <button
+                  type="button"
+                  className="ap-segment-btn"
+                  onClick={() => playSegmentYours(i)}
+                  disabled={!loaded || !hasChord}
+                >
+                  Yours
+                </button>
+                <button
+                  type="button"
+                  className={`ap-segment-btn${togetherActive ? ' active' : ''}`}
+                  style={togetherActive ? { borderColor: color, color } : undefined}
+                  onClick={() => playSegmentTogether(i)}
+                  disabled={!loaded || !hasChord}
+                >
+                  Together
+                </button>
+              </div>
             )
           })}
+        </div>
+      )}
+
+      {isScratchpad && (
+        <div className="ap-hear-btns">
+          <button
+            type="button"
+            className="ap-hear-btn"
+            onClick={hearOriginal}
+            disabled={!loaded}
+          >
+            Hear Original (Full)
+          </button>
+          <button
+            type="button"
+            className="ap-hear-btn"
+            onClick={hearYours}
+            disabled={!loaded || chosenChords.every((c) => c === null)}
+          >
+            Hear Yours (Full)
+          </button>
         </div>
       )}
 
@@ -529,17 +729,24 @@ export function AudioPlayer({
           >
             [ instrumental ]
           </p>
-          {VOCALS_VERSE_LINES.map((verse, verseIdx) =>
-            verse.map((line, lineIdx) => {
+          {VOCALS_VERSE_LINES.map((verse, verseIdx) => {
+            const reached =
+              loopIndex > verseIdx ||
+              (loopIndex === verseIdx && chordIndex === 3)
+            return verse.map((line, lineIdx) => {
               const color = CHORD_COLORS[lineIdx]
               const active = playing && loopIndex === verseIdx + 1 && chordIndex === lineIdx
+              const opacity = !reached ? 0 : active ? 1 : 0.3
               return (
-                <p key={`${verseIdx}-${lineIdx}`} style={{ color, opacity: active ? 1 : 0.3 }}>
+                <p
+                  key={`${verseIdx}-${lineIdx}`}
+                  style={{ color, opacity }}
+                >
                   {line}
                 </p>
               )
             })
-          )}
+          })}
         </div>
       )}
     </div>

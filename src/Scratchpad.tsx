@@ -9,6 +9,7 @@ type ScratchpadProps = {
   letterStates: Map<string, 'natural' | 'accidental'>
   onLetterStatesChange: (next: Map<string, 'natural' | 'accidental'>) => void
   onLetterPlay: (letter: string, state: 'natural' | 'accidental') => void
+  wrongLetters?: Set<string>
 }
 
 export function Scratchpad({
@@ -16,6 +17,7 @@ export function Scratchpad({
   letterStates,
   onLetterStatesChange,
   onLetterPlay,
+  wrongLetters,
 }: ScratchpadProps) {
   const setLetter = (letter: string, state: 'natural' | 'accidental' | null) => {
     const next = new Map(letterStates)
@@ -26,15 +28,17 @@ export function Scratchpad({
   }
 
   const letters = accidental === 'sharp' ? SHARP_LETTERS : FLAT_LETTERS
-  const accSymbol = accidental === 'sharp' ? '♯' : '♭'
+  const accLabel = accidental === 'sharp' ? 'Sharp' : 'Flat'
+  const notAccLabel = accidental === 'sharp' ? 'Not Sharp' : 'Not Flat'
 
   return (
     <div className={`scratchpad scratchpad-${accidental}`}>
       <div className="scratchpad-row">
         {letters.map((letter) => {
           const state = letterStates.get(letter) ?? null
+          const wrong = wrongLetters?.has(letter) ?? false
           return (
-            <div className="scratch-cell" key={letter}>
+            <div className={`scratch-cell${wrong ? ' is-wrong' : ''}`} key={letter}>
               <button
                 type="button"
                 className={`scratch-clear${state !== null ? ' visible' : ''}`}
@@ -45,34 +49,22 @@ export function Scratchpad({
               </button>
               <div className="scratch-letter">{letter}</div>
               <div className="scratch-segments">
-                {accidental === 'flat' && (
-                  <button
-                    type="button"
-                    className={`scratch-seg scratch-seg-acc${state === 'accidental' ? ' active' : ''}`}
-                    onClick={() => setLetter(letter, 'accidental')}
-                    aria-label={`${letter} ${accidental}`}
-                  >
-                    {accSymbol}
-                  </button>
-                )}
                 <button
                   type="button"
                   className={`scratch-seg scratch-seg-natural${state === 'natural' ? ' active' : ''}`}
                   onClick={() => setLetter(letter, 'natural')}
                   aria-label={`${letter} natural`}
                 >
-                  ♮
+                  {notAccLabel}
                 </button>
-                {accidental === 'sharp' && (
-                  <button
-                    type="button"
-                    className={`scratch-seg scratch-seg-acc${state === 'accidental' ? ' active' : ''}`}
-                    onClick={() => setLetter(letter, 'accidental')}
-                    aria-label={`${letter} ${accidental}`}
-                  >
-                    {accSymbol}
-                  </button>
-                )}
+                <button
+                  type="button"
+                  className={`scratch-seg scratch-seg-acc${state === 'accidental' ? ' active' : ''}`}
+                  onClick={() => setLetter(letter, 'accidental')}
+                  aria-label={`${letter} ${accidental}`}
+                >
+                  {accLabel}
+                </button>
               </div>
             </div>
           )

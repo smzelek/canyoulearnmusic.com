@@ -14,6 +14,8 @@ type KeyPickerProps = {
   accidental: Accidental
   onKeyChange: (k: NoteName) => void
   onModeChange: (m: Mode) => void
+  wrongKey?: boolean
+  wrongMode?: boolean
 }
 
 export function KeyPicker({
@@ -22,6 +24,8 @@ export function KeyPicker({
   accidental,
   onKeyChange,
   onModeChange,
+  wrongKey = false,
+  wrongMode = false,
 }: KeyPickerProps) {
   return (
     <div className="key-picker">
@@ -31,7 +35,7 @@ export function KeyPicker({
           <button
             key={k}
             type="button"
-            className={`key-btn${k === keyName ? ' active' : ''}`}
+            className={`key-btn${k === keyName ? ' active' : ''}${wrongKey && k === keyName ? ' is-wrong' : ''}`}
             onClick={() => onKeyChange(k)}
           >
             {formatNote(k, accidental)}
@@ -43,7 +47,7 @@ export function KeyPicker({
           type="button"
           role="tab"
           aria-selected={mode === 'major'}
-          className={`mode-btn${mode === 'major' ? ' active' : ''}`}
+          className={`mode-btn${mode === 'major' ? ' active' : ''}${wrongMode && mode === 'major' ? ' is-wrong' : ''}`}
           onClick={() => onModeChange('major')}
         >
           {formatNote(keyName, accidental)} Major
@@ -52,10 +56,10 @@ export function KeyPicker({
           type="button"
           role="tab"
           aria-selected={mode === 'minor'}
-          className={`mode-btn${mode === 'minor' ? ' active' : ''}`}
+          className={`mode-btn${mode === 'minor' ? ' active' : ''}${wrongMode && mode === 'minor' ? ' is-wrong' : ''}`}
           onClick={() => onModeChange('minor')}
         >
-          {formatNote(relativeMinorRoot(keyName), accidental)} minor
+          {formatNote(relativeMinorRoot(keyName), accidental)} minor (relative)
         </button>
       </div>
     </div>

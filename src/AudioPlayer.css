@@ -54,6 +54,21 @@
   transform: scale(0.95);
 }
 
+@keyframes ap-slot-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 var(--slot-color, currentColor);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 16px 4px var(--slot-color, currentColor);
+    transform: scale(1.06);
+  }
+}
+
+.ap-slot-circle-btn.is-current {
+  animation: ap-slot-glow 0.9s ease-in-out infinite;
+}
+
 .ap-play-btn {
   grid-column: 1;
   grid-row: 2;
@@ -260,14 +275,21 @@
 .ap-segment-btns {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.ap-segment-col {
+  display: flex;
+  flex-direction: column;
   gap: 4px;
 }
 
 .ap-segment-btn {
   font: inherit;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
-  height: 32px;
+  height: 26px;
+  padding: 0 6px;
   border-radius: 6px;
   border: 1px solid var(--border);
   background: var(--bg);
@@ -298,5 +320,39 @@
 }
 
 .audio-player.variant-scratchpad .ap-waveform-wrap {
+  cursor: default;
+}
+
+.ap-hear-btns {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.ap-hear-btn {
+  font: inherit;
+  font-size: 18px;
+  font-weight: 600;
+  height: 56px;
+  padding: 0 28px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-h);
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+}
+
+.ap-hear-btn:hover:not(:disabled) {
+  background: var(--accent-bg);
+  border-color: var(--accent-border);
+  color: var(--accent);
+}
+
+.ap-hear-btn:disabled {
+  opacity: 0.4;
   cursor: default;
 }

@@ -13,7 +13,7 @@ const FLAT_KEYS: KeyRow[] = [
   { major: 'C♭', minor: 'A♭', count: 7 },
 ]
 
-const SHARP_ACCIDENTALS = ['F♯', 'C♯', 'G♯', 'D♯', 'A♯', 'E♯', 'B♯']
+const SHARP_ACCIDENTALS = ['F', 'C', 'G', 'D', 'A', 'E', 'B']
 const SHARP_KEYS: KeyRow[] = [
   { major: 'G', minor: 'E', count: 1 },
   { major: 'D', minor: 'B', count: 2 },
@@ -35,10 +35,8 @@ function HalfTable({
   keys: KeyRow[]
   selected: boolean
 }) {
-  const title = side === 'flat' ? 'Flat Notes' : 'Sharp Notes'
   return (
     <div className={`sig-half sig-${side}${selected ? ' selected' : ''}`}>
-      <h3 className="sig-title">{title}</h3>
       <div className="sig-body">
         <div className="sig-vlabel sig-vlabel-left">Major Keys</div>
         <table className="sig-grid">
@@ -56,12 +54,14 @@ function HalfTable({
           <tbody>
             {keys.map((row) => (
               <tr key={row.major}>
-                <td className="sig-rowkey">{row.major}</td>
+                <td className="sig-rowkey"><span style={{fontSize: '10px'}}>The Key of</span> {row.major} <span style={{fontSize: '10px'}}>sharps:</span></td>
                 {accidentals.map((_, i) => (
                   <td key={i} className="sig-cell">
                     <span
                       className={`sig-dot ${i < row.count ? 'sig-dot-filled' : 'sig-dot-empty'}`}
-                    />
+                    >
+                      {i < row.count ? '✓' : null}
+                    </span>
                   </td>
                 ))}
                 <td className="sig-rowkey sig-rowkey-minor">{row.minor}</td>
@@ -69,7 +69,7 @@ function HalfTable({
             ))}
           </tbody>
         </table>
-        <div className="sig-vlabel sig-vlabel-right sig-minor">Minor Keys</div>
+        <div className="sig-vlabel sig-vlabel-right sig-minor">Minor Keys (relative)</div>
       </div>
     </div>
   )
