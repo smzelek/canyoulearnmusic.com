@@ -1,0 +1,113 @@
+.scratchpad {
+  --accent-color: #1e4ec3;
+
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+}
+
+.scratchpad-sharp {
+  --accent-color: #a8323a;
+}
+
+.scratchpad-flat {
+  --accent-color: #1e4ec3;
+}
+
+.scratchpad-label {
+  font-size: 13px;
+  color: var(--text);
+  font-style: italic;
+}
+
+.scratchpad-row {
+  display: flex;
+  gap: 10px;
+}
+
+.scratch-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.scratch-clear {
+  font: inherit;
+  font-size: 12px;
+  line-height: 1;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.1s, background 0.1s;
+}
+
+.scratch-clear.visible {
+  opacity: 0.45;
+  pointer-events: auto;
+}
+
+.scratch-clear.visible:hover {
+  opacity: 1;
+  background: var(--code-bg);
+}
+
+.scratch-letter {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-h);
+  font-family: var(--mono);
+}
+
+.scratch-segments {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.scratch-seg {
+  font: inherit;
+  font-size: 18px;
+  width: 28px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    color 0.12s;
+}
+
+.scratch-seg + .scratch-seg {
+  border-left: 1px solid var(--border);
+}
+
+.scratch-seg:hover:not(.active) {
+  background: var(--code-bg);
+}
+
+.scratch-seg-natural.active {
+  background: white;
+  color: #111;
+  font-weight: 700;
+}
+
+.scratch-seg-acc.active {
+  background: var(--accent-color);
+  color: white;
+}
