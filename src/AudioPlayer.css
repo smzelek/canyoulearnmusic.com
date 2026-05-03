@@ -34,6 +34,26 @@
   justify-content: center;
 }
 
+.ap-slot-circle-btn {
+  font: inherit;
+  font-size: 18px;
+  font-weight: 600;
+  border-style: solid;
+  cursor: pointer;
+  padding: 0;
+  transition:
+    background 0.15s,
+    transform 0.1s;
+}
+
+.ap-slot-circle-btn:hover {
+  background: var(--accent-bg);
+}
+
+.ap-slot-circle-btn:active {
+  transform: scale(0.95);
+}
+
 .ap-play-btn {
   grid-column: 1;
   grid-row: 2;

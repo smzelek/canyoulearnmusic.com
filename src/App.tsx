@@ -64,6 +64,7 @@ function App() {
   const [letterStates, setLetterStates] = useState<Map<Letter, 'natural' | 'accidental'>>(new Map())
   const [keyName, setKeyName] = useState<NoteName>('C')
   const [mode, setMode] = useState<Mode>('major')
+  const [chosenChords, setChosenChords] = useState<(number | null)[]>([null, null, null, null])
   const timerRef = useRef<number | null>(null)
   const scratchpadTimerRef = useRef<number | null>(null)
 
@@ -96,11 +97,18 @@ function App() {
     <section id="piano-demo">
       <h1>Find the Four Mystery Chords</h1>
       <AudioPlayer variant="instrumental" />
-      <AudioPlayer variant="with-vocals" />
+      <AudioPlayer
+        variant="with-vocals"
+        accidental={accidental}
+        chordOptions={chords}
+        chosenChords={chosenChords}
+      />
       <AudioPlayer
         variant="chord-scratchpad"
         accidental={accidental}
         chordOptions={chords}
+        chosenChords={chosenChords}
+        onChosenChordsChange={setChosenChords}
       />
       <h2>With Only a Simple Piano</h2>
       <Piano
