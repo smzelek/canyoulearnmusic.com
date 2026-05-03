@@ -96,12 +96,12 @@ function App() {
   const wrongMode = showWrongs && mode !== 'major'
   const wrongChordSlots = showWrongs
     ? new Set(
-        chosenChords
-          .map((c, i) =>
-            c === null || chords[c]?.name !== REQUIRED_CHORD_NAMES[i] ? i : -1,
-          )
-          .filter((i) => i >= 0),
-      )
+      chosenChords
+        .map((c, i) =>
+          c === null || chords[c]?.name !== REQUIRED_CHORD_NAMES[i] ? i : -1,
+        )
+        .filter((i) => i >= 0),
+    )
     : new Set<number>()
 
   const highlightChord = (notes: string[]) => {
@@ -165,21 +165,21 @@ function App() {
   const slides: { content: React.ReactNode; canAdvance?: boolean }[] = [
     {
       content: (
-        <div className="slide-title">
+        <div className="slide-stack">
           <h1>Who here would call themselves a musician?</h1>
         </div>
       ),
     },
     {
       content: (
-        <div className="slide-title">
+        <div className="slide-stack">
           <h1>Wrong!</h1>
         </div>
       ),
     },
     {
       content: (
-        <div className="slide-title">
+        <div className="slide-stack">
           <h1>You are all musicians.</h1>
         </div>
       ),
@@ -187,7 +187,29 @@ function App() {
     {
       content: (
         <div className="slide-stack">
-          <h1>Do you know how to play the piano?</h1>
+          <h1>Clearly some of you disagree.</h1>
+          <h1 style={{ marginTop: "80px" }}>Who here is confident they are NOT a musician?</h1>
+        </div>
+      ),
+    },
+    {
+      content: (
+        <div className="slide-stack">
+          <h1>Why do you think you're not a musician?</h1>
+        </div>
+      ),
+    },
+    {
+      content: (
+        <div className="slide-stack">
+          <h1>Let me ask you a few questions.</h1>
+        </div>
+      ),
+    },
+    {
+      content: (
+        <div className="slide-stack">
+          <h1>Do you know how to play piano?</h1>
           <Piano playableOctaves={[3, 4, 5]} accidental={accidental} />
         </div>
       ),
@@ -202,7 +224,7 @@ function App() {
     {
       content: (
         <div className="slide-stack">
-          <h1>Do you know how to play this song?</h1>
+          <h1>Do you know what the Four Mystery Chords are in this song?</h1>
           <AudioPlayer variant="instrumental" />
         </div>
       ),
@@ -217,10 +239,9 @@ function App() {
     {
       content: (
         <div className="slide-stack">
-          <h1>Today you are going to figure out -</h1>
-          <h2><i>from scratch</i></h2>
-          <h1>- how to play this song.</h1>
-          <AudioPlayer variant="instrumental" />
+          <h1>
+            Today you are gonna figure out how to play that song - from scratch.
+          </h1>
         </div>
       ),
     },
@@ -242,7 +263,7 @@ function App() {
     {
       content: (
         <div className="slide-stack">
-          <h1>"But Steve", you say, </h1>
+          <h1>"But Steve", you say,</h1>
           <h1>"I already told you I don't know</h1>
           <h1>how to play the piano!"</h1>
         </div>
@@ -258,11 +279,33 @@ function App() {
     {
       content: (
         <div className="slide-stack">
-          <h1>Welcome to Music 101: Notes</h1>
-          <AudioPlayer variant="instrumental" />
-          <p className="help-text">
-            With only a simple piano, we can find the <strong>Key Signature</strong> of the song.
-          </p>
+          <h1>
+            If you can find the Four Mystery Chords to play that song -
+          </h1>
+          <h1>
+             from scratch -
+          </h1>
+          <h1>
+            would you be convinced that you might be a musician?
+          </h1>
+        </div>
+      ),
+    },
+    {
+      content: (
+        <div className="slide-stack">
+          <h1>
+            Lets get started.
+          </h1>
+        </div>
+      ),
+    },
+    {
+      content: (
+        <div className="slide-stack">
+          <h1>
+            Using just a piano, you can find the <strong>Key Signature</strong> of the song.
+          </h1>
           <Piano
             playableOctaves={[4]}
             extraPlayableNotes={['B3', 'C5']}
@@ -271,11 +314,41 @@ function App() {
             accidental={accidental}
             softHighlights={scratchpadHighlights}
           />
+        </div>
+      ),
+    },
+    {
+      content: (
+        <div className="slide-stack">
+          <h1>"But Steve", you say, "I don't know what a Key Signature is!"</h1>
+        </div>
+      ),
+    },
+    {
+      content: (
+        <div className="slide-stack">
+          <h1>Doesn't matter!</h1>
+        </div>
+      ),
+    },
+    {
+      content: (
+        <div className="slide-stack">
+          <h2>Music 101: Consonance and Dissonance</h2>
+          <Piano
+            playableOctaves={[4]}
+            extraPlayableNotes={['B3', 'C5']}
+            activeNotes={scratchpadActiveNotes}
+            pressId={scratchpadPressId}
+            accidental={accidental}
+            softHighlights={scratchpadHighlights}
+          />
+          <AudioPlayer variant="instrumental" />
           <div className="freebie-stack">
+            {renderAccidentalToggle(wrongAccidental)}
             <p className="help-text">
               Freebie #1: we'll use Sharps for this song, not Flats.
             </p>
-            {renderAccidentalToggle(wrongAccidental)}
           </div>
           {renderScratchpad(wrongLetters)}
           <p className="help-text">
@@ -290,8 +363,25 @@ function App() {
     {
       content: (
         <div className="slide-stack">
-          <h1>Welcome to Music 102: Keys</h1>
+          <h1>Did you know you could do that?</h1>
+        </div>
+      ),
+    },
+    {
+      content: (
+        <div className="slide-stack">
+          <h1>Now you have everything you need to figure out what Key the song is in.</h1>
+        </div>
+      ),
+    },
+    {
+      content: (
+        <div className="slide-stack">
+          <h2>Music 102: Keys</h2>
           {renderScratchpad(new Set())}
+          <p className="help-text">
+            Match the sharps you found to the Key.
+          </p>
           <KeySignatureTable selected={accidental} />
           <p className="help-text">
             Freebie #2: This song is Major, not Minor.
@@ -313,8 +403,18 @@ function App() {
       content: (
         <div className="slide-stack">
           <h1>
-            The song is in the key of {formatNote(chordKey, accidental)}{' '}
+            That's right, the song is in the Key of {formatNote(chordKey, accidental)}{' '}
             {mode === 'major' ? 'Major' : 'minor'}!
+          </h1>
+        </div>
+      ),
+    },
+    {
+      content: (
+        <div className="slide-stack">
+          <h1>
+            Did you think you could figure out what Key a song
+            is in?
           </h1>
         </div>
       ),
@@ -331,26 +431,55 @@ function App() {
             accidental={accidental}
             onChordPlay={handleChordPlay}
           />
-          <p className="help-text">
-            Try clicking the chords to see them on the piano.
-          </p>
-          <Piano activeNotes={activeNotes} pressId={pressId} accidental={accidental} />
         </div>
       ),
     },
     {
       content: (
         <div className="slide-stack">
-          <h1>Welcome to Music 103: Chords</h1>
+          <h1>
+            Do you think you could learn to put your fingers into these piano positions?
+          </h1>
+          <Piano activeNotes={activeNotes} pressId={pressId} accidental={accidental} />
+          <ChordGrid
+            chords={chords}
+            accidental={accidental}
+            onChordPlay={handleChordPlay}
+          />
+        </div>
+      ),
+    },
+    {
+      content: (
+        <div className="slide-stack">
+          <h1>
+            Okay, so theoretically, that means you could play this song.
+          </h1>
+        </div>
+      ),
+    },
+    {
+      content: (
+        <div className="slide-stack">
+          <h1>
+            The song had Four Mystery Chords.
+          </h1>
+          <h1 style={{ marginTop: "50px" }}>
+            A Major gives you just 7 possible chords to choose from.
+          </h1>
+        </div>
+      ),
+    },
+    {
+      content: (
+        <div className="slide-stack">
+          <h2>
+            Music 103: Chords
+          </h2>
           <p className="help-text">
-            Now that we know the Key and the chords we can choose from,
+            Don't get fooled by Harmonies!
           </p>
-          <p className="help-text">
-            lets figure out what those Four Mystery Chords are.
-          </p>
-          <p className="help-text">
-            Warning: Don't let Harmonies trick you!
-          </p>
+          <Piano activeNotes={activeNotes} pressId={pressId} accidental={accidental} />
           <AudioPlayer
             variant="chord-scratchpad"
             accidental={accidental}
@@ -360,7 +489,6 @@ function App() {
             wrongChordSlots={wrongChordSlots}
             onNotesActive={highlightChord}
           />
-          <Piano activeNotes={activeNotes} pressId={pressId} accidental={accidental} />
         </div>
       ),
       canAdvance: chosenChords.every(
@@ -370,10 +498,32 @@ function App() {
     {
       content: (
         <div className="slide-stack">
-          <h1>You figured out the Four Mystery Chords!</h1>
+          <h1>
+            You found all Four Mystery Chords.
+          </h1>
+          <h1 style={{ marginTop: "50px" }}>
+            Using just your ears and a piano!
+          </h1>
+        </div>
+      ),
+    },
+    {
+      content: (
+        <div className="slide-stack">
+          <h1>
+            Did you think you could do that when we started?
+          </h1>
+        </div>
+      ),
+    },
+    {
+      content: (
+        <div className="slide-stack">
+          <h1>Try playing along with the song.</h1>
           <p className="help-text">
-            Click the chords you found to play along with the music!
+            Click the chords to play them on the piano.
           </p>
+          <Piano activeNotes={activeNotes} pressId={pressId} accidental={accidental} />
           <AudioPlayer
             variant="instrumental"
             accidental={accidental}
@@ -381,17 +531,14 @@ function App() {
             chosenChords={chosenChords}
             onNotesActive={highlightChord}
           />
-          <Piano activeNotes={activeNotes} pressId={pressId} accidental={accidental} />
         </div>
       ),
     },
     {
       content: (
         <div className="slide-stack">
-          <h1>Welcome to Music 104: SHOWTIME</h1>
-          <p className="help-text">
-            Let's put it all together.
-          </p>
+          <h1>Showtime!</h1>
+          <Piano activeNotes={activeNotes} pressId={pressId} accidental={accidental} />
           <AudioPlayer
             variant="with-vocals"
             accidental={accidental}
@@ -399,14 +546,13 @@ function App() {
             chosenChords={chosenChords}
             onNotesActive={highlightChord}
           />
-          <Piano activeNotes={activeNotes} pressId={pressId} accidental={accidental} />
         </div>
       ),
     },
     {
       content: (
-        <div className="slide-title">
-          <h1>You are all musicians. Thank you.</h1>
+        <div className="slide-stack">
+          <h1>I rest my case. You are all musicians. Thank you.</h1>
         </div>
       ),
     },

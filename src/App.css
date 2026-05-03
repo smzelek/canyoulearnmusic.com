@@ -67,23 +67,24 @@
   padding: 48px 32px 96px;
 }
 
-.slide-title {
+.slide-stack {
   text-align: center;
 }
 
-.slide-title h1 {
-  font-size: clamp(32px, 5vw, 56px);
-  line-height: 1.15;
+.slide-stack h1 {
+  font-size: 70px;
+  line-height: 70px;
   margin: 0 0 16px;
+  width: 980px;
 }
 
-.slide-title h2 {
+.slide-stack h2 {
   font-size: clamp(24px, 3.5vw, 40px);
   line-height: 1.2;
   margin: 0 0 16px;
 }
 
-.slide-title p {
+.slide-stack p {
   font-size: clamp(18px, 2vw, 24px);
   line-height: 1.4;
   margin: 0;
