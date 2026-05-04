@@ -22,7 +22,7 @@ import {
 import './App.css'
 
 const HIGHLIGHT_MS = 850
-const SCRATCHPAD_HIGHLIGHT_OCTAVES = [4]
+const SCRATCHPAD_PLAY_OCTAVE = 4
 
 const REQUIRED_LETTER_STATES: Record<string, 'natural' | 'accidental'> = {
   F: 'accidental',
@@ -54,7 +54,7 @@ function letterToNote(
   return `${SHARP_PITCH_CLASSES[semitone]}${baseOctave + octaveOffset}`
 }
 
-function buildScratchpadHighlights(
+function buildKeyNotes(
   letterStates: Map<string, 'natural' | 'accidental'>,
   accidental: 'flat' | 'sharp',
 ): Set<string> {
@@ -62,9 +62,10 @@ function buildScratchpadHighlights(
   for (const letter of LETTERS) {
     const state = letterStates.get(letter)
     if (!state) continue
-    for (const oct of SCRATCHPAD_HIGHLIGHT_OCTAVES) {
-      result.add(letterToNote(letter, state, accidental, oct))
-    }
+    const base = LETTER_SEMITONES[letter]
+    const delta = state === 'accidental' ? (accidental === 'sharp' ? 1 : -1) : 0
+    const semitone = ((base + delta) % 12 + 12) % 12
+    result.add(SHARP_PITCH_CLASSES[semitone])
   }
   return result
 }
@@ -84,7 +85,7 @@ function App() {
   const timerRef = useRef<number | null>(null)
   const scratchpadTimerRef = useRef<number | null>(null)
 
-  const scratchpadHighlights = buildScratchpadHighlights(letterStates, accidental)
+  const keyNotes = buildKeyNotes(letterStates, accidental)
   const chordKey = mode === 'minor' ? relativeMinorRoot(keyName) : keyName
   const chords = scaleChords(chordKey, mode)
 
@@ -119,7 +120,7 @@ function App() {
   }
 
   const handleScratchpadLetterPlay = (letter: string, state: 'natural' | 'accidental') => {
-    const note = letterToNote(letter, state, accidental, SCRATCHPAD_HIGHLIGHT_OCTAVES[0])
+    const note = letterToNote(letter, state, accidental, SCRATCHPAD_PLAY_OCTAVE)
     playNote(note)
     setScratchpadActiveNotes(new Set([note]))
     setScratchpadPressId((id) => id + 1)
@@ -152,13 +153,14 @@ function App() {
     </div>
   )
 
-  const renderScratchpad = (wrong: Set<string>) => (
+  const renderScratchpad = (wrong: Set<string>, allowChanging: boolean) => (
     <Scratchpad
       accidental={accidental}
       letterStates={letterStates}
       onLetterStatesChange={(next) => setLetterStates(next as Map<Letter, 'natural' | 'accidental'>)}
       onLetterPlay={handleScratchpadLetterPlay}
       wrongLetters={wrong}
+      allowChanging={allowChanging}
     />
   )
 
@@ -166,7 +168,7 @@ function App() {
     {
       content: (
         <div className="slide-stack">
-          <h1>Who here would call themselves a musician?</h1>
+          <h1>Would you call yourself a musician?</h1>
         </div>
       ),
     },
@@ -180,15 +182,7 @@ function App() {
     {
       content: (
         <div className="slide-stack">
-          <h1>You are all musicians.</h1>
-        </div>
-      ),
-    },
-    {
-      content: (
-        <div className="slide-stack">
-          <h1>Clearly some of you disagree.</h1>
-          <h1 style={{ marginTop: "80px" }}>Who here is confident they are NOT a musician?</h1>
+          <h1>Everyone is a musician.</h1>
         </div>
       ),
     },
@@ -224,7 +218,7 @@ function App() {
     {
       content: (
         <div className="slide-stack">
-          <h1>Do you know what the Four Mystery Chords are in this song?</h1>
+          <h1>Do you know what the <strong>Four Mystery Chords</strong> are in this song?</h1>
           <AudioPlayer variant="instrumental" />
         </div>
       ),
@@ -240,7 +234,13 @@ function App() {
       content: (
         <div className="slide-stack">
           <h1>
-            Today you are gonna figure out how to play that song - from scratch.
+            Today you are gonna figure out those <strong>Four Mystery Chords</strong> -
+          </h1>
+          <h1>
+            and learn to play that song -
+          </h1>
+          <h1>
+            from scratch.
           </h1>
         </div>
       ),
@@ -248,7 +248,7 @@ function App() {
     {
       content: (
         <div className="slide-stack">
-          <h1>"But Steve", you ask, "How am I gonna do that?"</h1>
+          <h1>"But", you ask, "How am I gonna do that?"</h1>
         </div>
       ),
     },
@@ -263,7 +263,7 @@ function App() {
     {
       content: (
         <div className="slide-stack">
-          <h1>"But Steve", you say,</h1>
+          <h1>"But", you say,</h1>
           <h1>"I already told you I don't know</h1>
           <h1>how to play the piano!"</h1>
         </div>
@@ -280,13 +280,13 @@ function App() {
       content: (
         <div className="slide-stack">
           <h1>
-            If you can find the Four Mystery Chords to play that song -
+            If you can find the <strong>Four Mystery Chords</strong> to play that song -
           </h1>
           <h1>
-             from scratch -
+            from scratch -
           </h1>
           <h1>
-            would you be convinced that you might be a musician?
+            would you be convinced that you're more of a musician than you thought?
           </h1>
         </div>
       ),
@@ -306,21 +306,14 @@ function App() {
           <h1>
             Using just a piano, you can find the <strong>Key Signature</strong> of the song.
           </h1>
-          <Piano
-            playableOctaves={[4]}
-            extraPlayableNotes={['B3', 'C5']}
-            activeNotes={scratchpadActiveNotes}
-            pressId={scratchpadPressId}
-            accidental={accidental}
-            softHighlights={scratchpadHighlights}
-          />
+          <Piano playableOctaves={[3, 4, 5]} accidental={accidental} />
         </div>
       ),
     },
     {
       content: (
         <div className="slide-stack">
-          <h1>"But Steve", you say, "I don't know what a Key Signature is!"</h1>
+          <h1>"But", you say, "I don't know what a <strong>Key Signature</strong> is!"</h1>
         </div>
       ),
     },
@@ -334,26 +327,39 @@ function App() {
     {
       content: (
         <div className="slide-stack">
+          <h1>For some reason, finding a <strong>Key Signature</strong> is something our brains just magically know how to do.</h1>
+        </div>
+      ),
+    },
+    {
+      content: (
+        <div className="slide-stack">
           <h2>Music 101: Consonance and Dissonance</h2>
+          <h3>
+            Turn the song on, and then for each note, click "{accidental === 'sharp' ? 'Sharp' : 'Flat'}" or "Not {accidental === 'sharp' ? 'Sharp' : 'Flat'}".
+          </h3>
+          <h3>
+            See which one sounds better across all four chords.
+          </h3>
+          <span style={{ marginTop: "10px" }}></span>
+          <div className="freebie-stack">
+            <p className="help-text">
+              HINT: we'll use "Sharps" for this song, not "Flats".
+            </p>
+            {renderAccidentalToggle(wrongAccidental)}
+          </div><p className="help-text">
+            HINT: the {accidental === 'sharp' ? 'Sharps' : 'Flats'} are in order. The first time you see a note that isn't {accidental === 'sharp' ? 'Sharp' : 'Flat'}, nothing to the right of it will be {accidental === 'sharp' ? 'Sharp' : 'Flat'} either.
+          </p>
+          {renderScratchpad(wrongLetters, true)}
+          <span style={{ marginTop: "30px" }}></span>
           <Piano
             playableOctaves={[4]}
             extraPlayableNotes={['B3', 'C5']}
             activeNotes={scratchpadActiveNotes}
             pressId={scratchpadPressId}
             accidental={accidental}
-            softHighlights={scratchpadHighlights}
           />
           <AudioPlayer variant="instrumental" />
-          <div className="freebie-stack">
-            {renderAccidentalToggle(wrongAccidental)}
-            <p className="help-text">
-              Freebie #1: we'll use Sharps for this song, not Flats.
-            </p>
-          </div>
-          {renderScratchpad(wrongLetters)}
-          <p className="help-text">
-            Hint: The {accidental === 'sharp' ? 'Sharps' : 'Flats'} are in order. The first time you see a note that isn't {accidental === 'sharp' ? 'Sharp' : 'Flat'}, nothing to the right of it will be {accidental === 'sharp' ? 'Sharp' : 'Flat'} either.
-          </p>
         </div>
       ),
       canAdvance:
@@ -363,28 +369,31 @@ function App() {
     {
       content: (
         <div className="slide-stack">
-          <h1>Did you know you could do that?</h1>
+          <h1>Did you know your brain was good at that?</h1>
         </div>
       ),
     },
     {
       content: (
         <div className="slide-stack">
-          <h1>Now you have everything you need to figure out what Key the song is in.</h1>
+          <h1>
+            Now that you know which notes are "{accidental === 'sharp' ? 'Sharp' : 'Flat'}",
+            you have everything you need to figure out the <strong>Key Signature</strong> of the song.
+          </h1>
         </div>
       ),
     },
     {
       content: (
         <div className="slide-stack">
-          <h2>Music 102: Keys</h2>
-          {renderScratchpad(new Set())}
-          <p className="help-text">
-            Match the sharps you found to the Key.
-          </p>
+          <h2>Music 102: Key Signatures</h2>
+          <h3>
+            Use the <strong>"{accidental === 'sharp' ? 'Sharp' : 'Flat'}s"</strong> you found to choose the <strong>Key Signature</strong>.
+          </h3>
+          {renderScratchpad(new Set(), false)}
           <KeySignatureTable selected={accidental} />
           <p className="help-text">
-            Freebie #2: This song is Major, not Minor.
+            HINT: This song is Major, not Minor.
           </p>
           <KeyPicker
             keyName={keyName}
@@ -403,8 +412,8 @@ function App() {
       content: (
         <div className="slide-stack">
           <h1>
-            That's right, the song is in the Key of {formatNote(chordKey, accidental)}{' '}
-            {mode === 'major' ? 'Major' : 'minor'}!
+            That's right, the song is in <strong>{formatNote(chordKey, accidental)}{' '}
+            {mode === 'major' ? 'Major' : 'minor'}</strong>!
           </h1>
         </div>
       ),
@@ -413,8 +422,7 @@ function App() {
       content: (
         <div className="slide-stack">
           <h1>
-            Did you think you could figure out what Key a song
-            is in?
+            Did you know you're able to figure out the <strong>Key Signature</strong> of a song?
           </h1>
         </div>
       ),
@@ -423,9 +431,39 @@ function App() {
       content: (
         <div className="slide-stack">
           <h1>
-            Chords in the Key of {formatNote(chordKey, accidental)}{' '}
-            {mode === 'major' ? 'Major' : 'minor'}:
+            This is what <strong>{formatNote(chordKey, accidental)}{' '}
+            {mode === 'major' ? 'Major' : 'minor'}</strong> looks like on the piano.
+            It's those same notes you found, repeating across the piano.
           </h1>
+          <Piano
+            activeNotes={activeNotes}
+            playableOctaves={[3, 4, 5]}
+            pressId={pressId}
+            accidental={accidental}
+            keyNotes={keyNotes}
+          />
+          <h3>
+            Try playing around with those notes. See how they all sound good together?
+            <h3>
+            </h3>
+            That's what makes the combination of them a "Key".
+          </h3>
+        </div>
+      ),
+    },
+    {
+      content: (
+        <div className="slide-stack">
+          <h1>
+            There are 7 chords in the Key of <strong>{formatNote(chordKey, accidental)}{' '}
+            {mode === 'major' ? 'Major' : 'minor'}</strong>. Chords are how you combine notes from the Key.
+          </h1>
+          <Piano
+            activeNotes={activeNotes}
+            playableOctaves={[3, 4, 5]}
+            pressId={pressId}
+            accidental={accidental}
+          />
           <ChordGrid
             chords={chords}
             accidental={accidental}
@@ -438,9 +476,13 @@ function App() {
       content: (
         <div className="slide-stack">
           <h1>
-            Do you think you could learn to put your fingers into these piano positions?
+            If you had time to practice, do you think you could learn to put your fingers into these chord positions?
           </h1>
-          <Piano activeNotes={activeNotes} pressId={pressId} accidental={accidental} />
+          <Piano
+            activeNotes={activeNotes}
+            pressId={pressId}
+            accidental={accidental}
+          />
           <ChordGrid
             chords={chords}
             accidental={accidental}
@@ -462,10 +504,14 @@ function App() {
       content: (
         <div className="slide-stack">
           <h1>
-            The song had Four Mystery Chords.
+            The song had <strong>Four Mystery Chords</strong>.
           </h1>
           <h1 style={{ marginTop: "50px" }}>
-            A Major gives you just 7 possible chords to choose from.
+            Remember, <strong>{formatNote(chordKey, accidental)}{' '}
+            {mode === 'major' ? 'Major' : 'minor'}</strong> gives you just 7 possible chords to choose from.
+          </h1>
+          <h1 style={{ marginTop: "50px" }}>
+            I think you can figure them out now.
           </h1>
         </div>
       ),
@@ -476,9 +522,10 @@ function App() {
           <h2>
             Music 103: Chords
           </h2>
-          <p className="help-text">
-            Don't get fooled by Harmonies!
-          </p>
+          <h3>
+            Find the <strong>Four Mystery Chords</strong>, one at a time, out of the 7 chords in <strong>{formatNote(chordKey, accidental)}{' '}
+            {mode === 'major' ? 'Major' : 'minor'}</strong>.
+          </h3>
           <Piano activeNotes={activeNotes} pressId={pressId} accidental={accidental} />
           <AudioPlayer
             variant="chord-scratchpad"
@@ -489,6 +536,12 @@ function App() {
             wrongChordSlots={wrongChordSlots}
             onNotesActive={highlightChord}
           />
+          <p className="help-text">
+            HINT: Don't get fooled by Harmonies! These chords will all sound pretty good together.
+          </p>
+          <p className="help-text">
+            Find what sounds boring - that's how you know it's a match.
+          </p>
         </div>
       ),
       canAdvance: chosenChords.every(
@@ -499,10 +552,7 @@ function App() {
       content: (
         <div className="slide-stack">
           <h1>
-            You found all Four Mystery Chords.
-          </h1>
-          <h1 style={{ marginTop: "50px" }}>
-            Using just your ears and a piano!
+            Did you know you could figure out, by ear, the chords a song is using?
           </h1>
         </div>
       ),
@@ -510,19 +560,10 @@ function App() {
     {
       content: (
         <div className="slide-stack">
-          <h1>
-            Did you think you could do that when we started?
-          </h1>
-        </div>
-      ),
-    },
-    {
-      content: (
-        <div className="slide-stack">
-          <h1>Try playing along with the song.</h1>
-          <p className="help-text">
-            Click the chords to play them on the piano.
-          </p>
+          <h1>Let's have some fun. Practice playing along with the song.</h1>
+          <h3>
+            Turn the song on and click the chords to play them on the piano.
+          </h3>
           <Piano activeNotes={activeNotes} pressId={pressId} accidental={accidental} />
           <AudioPlayer
             variant="instrumental"
@@ -531,6 +572,13 @@ function App() {
             chosenChords={chosenChords}
             onNotesActive={highlightChord}
           />
+        </div>
+      ),
+    },
+    {
+      content: (
+        <div className="slide-stack">
+          <h1>Feeling good? Let's put it all together.</h1>
         </div>
       ),
     },
@@ -552,7 +600,7 @@ function App() {
     {
       content: (
         <div className="slide-stack">
-          <h1>I rest my case. You are all musicians. Thank you.</h1>
+          <h1>I rest my case. Everyone is a musician. Thank you.</h1>
         </div>
       ),
     },

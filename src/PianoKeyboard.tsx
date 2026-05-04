@@ -42,7 +42,7 @@ type PianoProps = {
   activeNotes?: Set<string>
   pressId?: number
   accidental?: Accidental
-  softHighlights?: Set<string>
+  keyNotes?: Set<string>
 }
 
 export function Piano({
@@ -51,11 +51,17 @@ export function Piano({
   activeNotes,
   pressId = 0,
   accidental = 'sharp',
-  softHighlights,
+  keyNotes,
 }: PianoProps) {
   const interactive = playableOctaves !== undefined
-  const isPlayable = (note: string, oct: number) =>
-    interactive && (playableOctaves!.includes(oct) || (extraPlayableNotes?.includes(note) ?? false))
+  const isVisible = (note: string, oct: number) =>
+    !interactive || playableOctaves!.includes(oct) || (extraPlayableNotes?.includes(note) ?? false)
+
+  const visibleWhites = whites.filter(k => isVisible(k.note, k.octave))
+  const indexMap = new Map(visibleWhites.map((k, i) => [k.index, i]))
+  const visibleBlacks = blacks
+    .filter(k => isVisible(k.note, k.octave))
+    .map(k => ({ ...k, afterIndex: indexMap.get(k.afterIndex) ?? k.afterIndex }))
 
   const renderKey = (
     note: string,
@@ -63,14 +69,13 @@ export function Piano({
     color: 'white' | 'black',
     style?: CSSProperties,
   ) => {
-    const playable = isPlayable(note, octave)
-    const muted = interactive && !playable
+    const playable = !interactive || isVisible(note, octave)
+    const soft = keyNotes?.has(note.replace(/\d+$/, '')) ?? false
+    const notInKey = keyNotes !== undefined && !soft
     const active = activeNotes?.has(note) ?? false
-    const soft = softHighlights?.has(note) ?? false
     const cls = [
       'key',
       color,
-      muted ? 'muted' : '',
       active ? 'active' : '',
       soft ? 'soft' : '',
     ]
@@ -81,7 +86,7 @@ export function Piano({
         key={`${note}-${active ? pressId : 'idle'}`}
         type="button"
         className={cls}
-        disabled={!playable}
+        disabled={!playable || notInKey}
         onClick={() => playNote(note)}
         style={style}
       >
@@ -93,11 +98,11 @@ export function Piano({
   return (
     <div
       className={`piano piano-mode-${accidental}`}
-      style={{ '--white-count': whites.length } as CSSProperties}
+      style={{ '--white-count': visibleWhites.length } as CSSProperties}
     >
       <div className="piano-keys">
-        {whites.map((k) => renderKey(k.note, k.octave, 'white'))}
-        {blacks.map((k) =>
+        {visibleWhites.map((k) => renderKey(k.note, k.octave, 'white'))}
+        {visibleBlacks.map((k) =>
           renderKey(k.note, k.octave, 'black', {
             left: `calc(${k.afterIndex + 1} * var(--white-w) - var(--black-w) / 2)`,
           }),

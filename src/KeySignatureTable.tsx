@@ -4,6 +4,7 @@ type KeyRow = { major: string; minor: string; count: number }
 
 const FLAT_ACCIDENTALS = ['B♭', 'E♭', 'A♭', 'D♭', 'G♭', 'C♭', 'F♭']
 const FLAT_KEYS: KeyRow[] = [
+  { major: 'C', minor: 'Am', count: 0 },
   { major: 'F', minor: 'D', count: 1 },
   { major: 'B♭', minor: 'G', count: 2 },
   { major: 'E♭', minor: 'C', count: 3 },
@@ -15,6 +16,7 @@ const FLAT_KEYS: KeyRow[] = [
 
 const SHARP_ACCIDENTALS = ['F', 'C', 'G', 'D', 'A', 'E', 'B']
 const SHARP_KEYS: KeyRow[] = [
+  { major: 'C', minor: 'Am', count: 0 },
   { major: 'G', minor: 'E', count: 1 },
   { major: 'D', minor: 'B', count: 2 },
   { major: 'A', minor: 'F♯', count: 3 },
@@ -54,7 +56,7 @@ function HalfTable({
           <tbody>
             {keys.map((row) => (
               <tr key={row.major}>
-                <td className="sig-rowkey"><span style={{fontSize: '10px'}}>The Key of</span> {row.major} <span style={{fontSize: '10px'}}>sharps:</span></td>
+                <td className="sig-rowkey">{row.major} <span style={{fontSize: '10px'}}>has {row.count} sharps:</span></td>
                 {accidentals.map((_, i) => (
                   <td key={i} className="sig-cell">
                     <span

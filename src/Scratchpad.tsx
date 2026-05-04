@@ -10,6 +10,7 @@ type ScratchpadProps = {
   onLetterStatesChange: (next: Map<string, 'natural' | 'accidental'>) => void
   onLetterPlay: (letter: string, state: 'natural' | 'accidental') => void
   wrongLetters?: Set<string>
+  allowChanging: boolean;
 }
 
 export function Scratchpad({
@@ -18,8 +19,12 @@ export function Scratchpad({
   onLetterStatesChange,
   onLetterPlay,
   wrongLetters,
+  allowChanging
 }: ScratchpadProps) {
   const setLetter = (letter: string, state: 'natural' | 'accidental' | null) => {
+    if (!allowChanging) {
+      return;
+    }
     const next = new Map(letterStates)
     if (state === null) next.delete(letter)
     else next.set(letter, state)
@@ -39,15 +44,15 @@ export function Scratchpad({
           const wrong = wrongLetters?.has(letter) ?? false
           return (
             <div className={`scratch-cell${wrong ? ' is-wrong' : ''}`} key={letter}>
-              <button
+              {allowChanging ? (<button
                 type="button"
                 className={`scratch-clear${state !== null ? ' visible' : ''}`}
                 onClick={() => setLetter(letter, null)}
                 aria-label={`Clear ${letter}`}
               >
                 ×
-              </button>
-              <div className="scratch-letter">{letter}</div>
+              </button>) : null}
+              <div className="scratch-letter">{letter}{letterStates.get(letter) === 'accidental' ? (accidental === 'sharp' ? "♯" : "b") : null}</div>
               <div className="scratch-segments">
                 <button
                   type="button"

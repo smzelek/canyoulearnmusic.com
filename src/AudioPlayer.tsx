@@ -352,20 +352,20 @@ export function AudioPlayer({
     rafRef.current = requestAnimationFrame(animate)
   }
 
-  const startFromLoop = (loopIdx: number) => {
-    try { sourceRef.current?.stop() } catch { /**/ }
-    sourceRef.current = null
-    cancelAnimationFrame(rafRef.current)
-    const offset = VOCALS_LOOP_STARTS[loopIdx]
-    globalOffsetRef.current = offset
-    loopIndexRef.current = loopIdx
-    chordIndexRef.current = 0
-    setLoopIndex(loopIdx)
-    setChordIndex(0)
-    startSource(offset)
-    setPlaying(true)
-    rafRef.current = requestAnimationFrame(animate)
-  }
+  // const startFromLoop = (loopIdx: number) => {
+  //   try { sourceRef.current?.stop() } catch { /**/ }
+  //   sourceRef.current = null
+  //   cancelAnimationFrame(rafRef.current)
+  //   const offset = VOCALS_LOOP_STARTS[loopIdx]
+  //   globalOffsetRef.current = offset
+  //   loopIndexRef.current = loopIdx
+  //   chordIndexRef.current = 0
+  //   setLoopIndex(loopIdx)
+  //   setChordIndex(0)
+  //   startSource(offset)
+  //   setPlaying(true)
+  //   rafRef.current = requestAnimationFrame(animate)
+  // }
 
   const playSegmentGuitar = (idx: number, kind: 'original' | 'together' = 'original') => {
     const ac = acRef.current
@@ -607,31 +607,7 @@ export function AudioPlayer({
         })}
       </div>
 
-      {isVocals ? (
-        <div className="ap-loop-btns">
-          {[0, 1, 2].map((idx) => (
-            <button
-              key={idx}
-              type="button"
-              className={`ap-loop-btn${loopIndex === idx && playing ? ' active' : ''}`}
-              onClick={() => startFromLoop(idx)}
-              disabled={!loaded}
-              aria-label={`Start loop ${idx + 1}`}
-            >
-              {idx + 1}
-            </button>
-          ))}
-          <button
-            type="button"
-            className="ap-loop-btn ap-stop-btn"
-            onClick={stop}
-            disabled={!loaded || !playing}
-            aria-label="Stop"
-          >
-            ⏹
-          </button>
-        </div>
-      ) : isScratchpad ? null : (
+      {isScratchpad ? null : (
         <button
           type="button"
           className={`ap-play-btn${playing ? ' playing' : ''}`}
